@@ -1,6 +1,7 @@
 from functools import partial
 import numpy as np
 import pandas as pd
+import sympy
 
 
 def H(a, b, c, d, e, x, y):
@@ -27,10 +28,13 @@ def calc_row(C, a_counts, b_counts, k):
     row.update(calc_y(C, a_counts, k))
     return row
 
-def iterative_method(C, e=0.1, first_x=1, first_y=1):
+def iterative_method(C, e=0.1, first_x=None, first_y=None):
     a_counts = np.zeros(C.shape[0])
     b_counts = np.zeros(C.shape[1])
     # Первый ход
+    first_x = first_x or np.random.randint(0, C.shape[0])
+    first_y = first_y or np.random.randint(0, C.shape[1])
+
     a_counts[first_x-1] += 1
     b_counts[first_y-1] += 1
 
@@ -83,7 +87,17 @@ if __name__ == "__main__":
 
     H = partial(H, a, b, c, d, e)
 
-    for N in range(2, 11):
+    x, y = sympy.symbols('x, y')
+    res = sympy.linsolve([2*a*x+c*y+d, 2*b*y+c*x+e], (x, y))
+    for x, y in res:
+        if x >=0 and y >= 0:
+            x_ = x
+            y_ = y
+    H_ = H(x_, y_)
+    print('Аналитическое решение: ', f'x={x_}, y={y_}, H(x,y)={H_}', sep='\n')
+
+    N = 2
+    while(True):
         C = np.fromfunction(lambda i, j: H(i/N, j/N), (N+1, N+1))
         print(f'N={N}', C, sep='\n')
         saddle = check_saddle(C)
@@ -98,3 +112,12 @@ if __name__ == "__main__":
             x = a @ distr
             y = b @ distr
         print(f'x={x}, y={y}, H={H(x,y)}')
+        if abs(H(x, y) - H_) < 0.001:
+            break
+        N += 1
+
+    print('Найдено решение:', 
+         f'x={x}, y={y}, H={H(x,y)}', 
+         f'Величина погрешности: {abs(H(x, y) - H_)}',
+         sep='\n'
+    )
