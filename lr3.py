@@ -2,10 +2,10 @@ import numpy as np
 import pandas as pd
 from numpy.lib.recfunctions import unstructured_to_structured as beautify
 
-def crossroad(e=0.001):
+def crossroad(d1=0, d2=0 , e=0.001):
     return np.array([
-        [(1, 1), (1-e, 2)],
-        [(2, 1-e), (0, 0)]
+        [(1-d1, 1-d2), (1-e-d1, 2)],
+        [(2, 1-e-d2), (0, 0)]
     ])
 
 def bos():
@@ -52,10 +52,14 @@ def string_res(C, res):
     return '\n'.join([f'i={x} j={y} u={tuple(C[x,y])}' for x, y in np.argwhere(res)])
 
 if __name__ == "__main__":
+    # crossroad_consts
+    e =  np.round(np.random.random() * 0.3, 3)
+    d1 = np.round(np.random.random() * 0.7, 3)
+    d2 = np.round(np.random.random() * 0.7, 3)
     first_task = [
         ('Случайная игра (10х10):', rand_matrix()),
         ('Семейный спор', bos()),
-        ('Перекрёсток', crossroad()),
+        (f'Перекрёсток, e={e}, d1={d1}, d2={d2}', crossroad(d1, d2, e)),
         ('Дилемма заключённого', prisoners_d())
     ]
     df = pd.DataFrame(beautify(first_task[0][1]).astype('O'))
