@@ -28,7 +28,7 @@ def calc_row(C, a_counts, b_counts, k):
     row.update(calc_y(C, a_counts, k))
     return row
 
-def iterative_method(C, e=0.1, first_x=None, first_y=None):
+def iterative_method(C, e=0.01, first_x=None, first_y=None):
     a_counts = np.zeros(C.shape[0])
     b_counts = np.zeros(C.shape[1])
     # Первый ход
@@ -75,6 +75,14 @@ def check_saddle(C):
             if C[i][j] == minmax:
                 return (i,j)
 
+def analytical_method(C):
+    u = np.ones(len(C))
+    C_rev = np.linalg.inv(C)
+    v = 1 / (u @ C_rev @ u)
+    x = (u @ C_rev) * v
+    y = (C_rev @ u) * v
+    return x, y
+
 
 if __name__ == "__main__":
     np.set_printoptions(formatter={'float': '{: 0.3f}'.format})
@@ -96,6 +104,9 @@ if __name__ == "__main__":
     H_ = H(x_, y_)
     print('Аналитическое решение: ', f'x={x_}, y={y_}, H(x,y)={H_}', sep='\n')
 
+    eps = 0.1
+
+    last_H = None
     N = 2
     while(True):
         C = np.fromfunction(lambda i, j: H(i/N, j/N), (N+1, N+1))
@@ -106,14 +117,19 @@ if __name__ == "__main__":
             x = saddle[0]/N
             y = saddle[1]/N
         else:
-            print('Седловой точки нет, решение методом Брауна-Робинсон:')
-            a, b = iterative_method(C)
+            if np.isclose(np.linalg.det(C), 0):
+                print('Седловой точки нет, решение методом Брауна-Робинсон:')
+                a, b = iterative_method(C)
+            else:
+                print('Седловой точки нет, решение аналитическим методом:')
+                a, b = analytical_method(C)
             distr = np.fromfunction(lambda i: i/N, (N+1,))
             x = a @ distr
             y = b @ distr
         print(f'x={x}, y={y}, H={H(x,y)}')
-        if abs(H(x, y) - H_) < 0.001:
+        if last_H and abs(last_H - H(x,y)) < eps:
             break
+        last_H = H(x,y)
         N += 1
 
     print('Найдено решение:', 
